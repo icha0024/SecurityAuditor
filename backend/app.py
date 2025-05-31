@@ -258,10 +258,46 @@ class SecurityHeaderChecker:
                 'scan_time': datetime.now().isoformat()
             }
             
+        except requests.exceptions.ConnectionError as e:
+            error_msg = str(e)
+            if 'getaddrinfo failed' in error_msg or 'Name or service not known' in error_msg:
+                user_error = f"Could not find website '{url}'. Please check the URL is correct."
+            elif 'Connection refused' in error_msg:
+                user_error = f"Website '{url}' refused the connection."
+            else:
+                user_error = f"Could not connect to '{url}'. Please check the URL and try again."
+            
+            return {
+                'url': url,
+                'error': user_error,
+                'risk': 'UNKNOWN',
+                'scan_time': datetime.now().isoformat()
+            }
+        except requests.exceptions.Timeout:
+            return {
+                'url': url,
+                'error': f"Website '{url}' took too long to respond. Please try again later.",
+                'risk': 'UNKNOWN',
+                'scan_time': datetime.now().isoformat()
+            }
+        except requests.exceptions.InvalidURL:
+            return {
+                'url': url,
+                'error': f"Invalid URL format: '{url}'. Please enter a valid website URL.",
+                'risk': 'UNKNOWN',
+                'scan_time': datetime.now().isoformat()
+            }
+        except requests.exceptions.TooManyRedirects:
+            return {
+                'url': url,
+                'error': f"Website '{url}' has too many redirects. Cannot analyze headers.",
+                'risk': 'UNKNOWN',
+                'scan_time': datetime.now().isoformat()
+            }
         except Exception as e:
             return {
                 'url': url,
-                'error': str(e),
+                'error': f"Unable to analyze '{url}'. Please check the URL and try again.",
                 'risk': 'UNKNOWN',
                 'scan_time': datetime.now().isoformat()
             }
