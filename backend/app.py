@@ -116,11 +116,29 @@ class SSLChecker:
             else:
                 risk = 'LOW'
             
+            # Parse issuer and subject safely
+            issuer = 'Unknown'
+            subject = domain
+            
+            if 'issuer' in cert and cert['issuer']:
+                for item in cert['issuer']:
+                    if isinstance(item, tuple) and len(item) >= 2:
+                        if item[0] == 'organizationName':
+                            issuer = item[1]
+                            break
+            
+            if 'subject' in cert and cert['subject']:
+                for item in cert['subject']:
+                    if isinstance(item, tuple) and len(item) >= 2:
+                        if item[0] == 'commonName':
+                            subject = item[1]
+                            break
+            
             return {
                 'domain': domain,
                 'valid': True,
-                'issuer': cert.get('issuer', [{}])[0].get('organizationName', 'Unknown'),
-                'subject': cert.get('subject', [{}])[0].get('commonName', domain),
+                'issuer': issuer,
+                'subject': subject,
                 'valid_from': cert['notBefore'],
                 'valid_until': cert['notAfter'],
                 'days_until_expiry': days_until_expiry,
