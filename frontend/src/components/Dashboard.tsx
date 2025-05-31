@@ -326,7 +326,7 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
                 </button>
               </form>
 
-              {headersResults && (
+              {headersResults && !headersResults.error && (
                 <div className="results-section">
                   <h3>Security Headers Analysis</h3>
                   <div className="headers-summary">
@@ -346,22 +346,32 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
 
                   <div className="headers-details">
                     <div className="headers-section">
-                      <h4>Present Headers ({headersResults.present_headers.length})</h4>
-                      {headersResults.present_headers.map((header, index) => (
+                      <h4>Present Headers ({headersResults.present_headers?.length || 0})</h4>
+                      {headersResults.present_headers?.map((header, index) => (
                         <div key={index} className="header-item present">
                           ✓ {header}
                         </div>
-                      ))}
+                      )) || <div className="no-headers">No headers present</div>}
                     </div>
 
                     <div className="headers-section">
-                      <h4>Missing Headers ({headersResults.missing_headers.length})</h4>
-                      {headersResults.missing_headers.map((header, index) => (
+                      <h4>Missing Headers ({headersResults.missing_headers?.length || 0})</h4>
+                      {headersResults.missing_headers?.map((header, index) => (
                         <div key={index} className="header-item missing">
                           ✗ {header}
                         </div>
-                      ))}
+                      )) || <div className="no-headers">No missing headers</div>}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {headersResults && headersResults.error && (
+                <div className="results-section">
+                  <h3>Security Headers Analysis</h3>
+                  <div className="ssl-error">
+                    <p>Failed to analyze security headers.</p>
+                    <p>Error: {headersResults.error}</p>
                   </div>
                 </div>
               )}

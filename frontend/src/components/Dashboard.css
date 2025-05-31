@@ -295,6 +295,15 @@
   border-left: 4px solid #dc3545;
 }
 
+.no-headers {
+  padding: 15px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
 @media (max-width: 768px) {
   .scan-tabs {
     flex-direction: column;
