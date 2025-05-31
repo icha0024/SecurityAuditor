@@ -184,12 +184,12 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
               <h2>Network Port Scanner</h2>
               <form onSubmit={handlePortScan} className="scan-form">
                 <div className="form-group">
-                  <label>Target IP Address</label>
+                  <label>Target IP Address or Domain</label>
                   <input
                     type="text"
                     value={portTarget}
                     onChange={(e) => setPortTarget(e.target.value)}
-                    placeholder="e.g., 8.8.8.8"
+                    placeholder="e.g., 8.8.8.8 or google.com"
                     required
                   />
                 </div>

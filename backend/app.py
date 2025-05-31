@@ -65,14 +65,30 @@ class PortScanner:
     def scan(self, target):
         self.results = []
         
+        # Handle both domain names and IP addresses
         try:
-            ipaddress.ip_address(target)
+            # Try to resolve domain name to IP address
+            ip_address = socket.gethostbyname(target)
+            if target != ip_address:
+                # It was a domain name, use the resolved IP
+                scan_target = ip_address
+                display_target = f"{target} ({ip_address})"
+            else:
+                # It was already an IP address
+                scan_target = target
+                display_target = target
+                # Validate IP format
+                ipaddress.ip_address(target)
+        except socket.gaierror:
+            return {'error': f'Could not resolve domain name: {target}'}
         except ValueError:
-            return {'error': 'Invalid IP address format'}
+            return {'error': 'Invalid IP address or domain name format'}
+        except Exception as e:
+            return {'error': f'Error resolving target: {str(e)}'}
         
         threads = []
         for port in self.common_ports:
-            thread = threading.Thread(target=self.scan_port, args=(target, port))
+            thread = threading.Thread(target=self.scan_port, args=(scan_target, port))
             threads.append(thread)
             thread.start()
         
@@ -90,7 +106,8 @@ class PortScanner:
             overall_risk = 'NONE'
         
         return {
-            'target': target,
+            'target': display_target,
+            'resolved_ip': ip_address if target != ip_address else None,
             'scan_time': datetime.now().isoformat(),
             'open_ports': self.results,
             'total_open': len(self.results),
@@ -100,6 +117,30 @@ class PortScanner:
 class SSLChecker:
     def check_ssl(self, domain, port=443):
         try:
+            # Clean up domain name
+            domain = domain.strip().lower()
+            # Remove protocol if present
+            if domain.startswith('http://') or domain.startswith('https://'):
+                domain = domain.split('://', 1)[1]
+            # Remove path if present
+            if '/' in domain:
+                domain = domain.split('/', 1)[0]
+            # Remove port if present
+            if ':' in domain:
+                domain = domain.split(':', 1)[0]
+            
+            # Test DNS resolution first
+            try:
+                socket.gethostbyname(domain)
+            except socket.gaierror:
+                return {
+                    'domain': domain,
+                    'valid': False,
+                    'error': f'Could not resolve domain name: {domain}',
+                    'risk': 'HIGH',
+                    'scan_time': datetime.now().isoformat()
+                }
+            
             context = ssl.create_default_context()
             with socket.create_connection((domain, port), timeout=10) as sock:
                 with context.wrap_socket(sock, server_hostname=domain) as ssock:
@@ -146,11 +187,35 @@ class SSLChecker:
                 'scan_time': datetime.now().isoformat()
             }
             
+        except socket.gaierror as e:
+            return {
+                'domain': domain,
+                'valid': False,
+                'error': f'DNS resolution failed: {str(e)}',
+                'risk': 'HIGH',
+                'scan_time': datetime.now().isoformat()
+            }
+        except socket.timeout:
+            return {
+                'domain': domain,
+                'valid': False,
+                'error': 'Connection timeout - server may not support SSL/TLS',
+                'risk': 'HIGH',
+                'scan_time': datetime.now().isoformat()
+            }
+        except ssl.SSLError as e:
+            return {
+                'domain': domain,
+                'valid': False,
+                'error': f'SSL/TLS error: {str(e)}',
+                'risk': 'HIGH',
+                'scan_time': datetime.now().isoformat()
+            }
         except Exception as e:
             return {
                 'domain': domain,
                 'valid': False,
-                'error': str(e),
+                'error': f'Unexpected error: {str(e)}',
                 'risk': 'HIGH',
                 'scan_time': datetime.now().isoformat()
             }
@@ -255,7 +320,7 @@ def scan_ports():
     target = data.get('target', '').strip()
     
     if not target:
-        return jsonify({'error': 'Target IP address is required'}), 400
+        return jsonify({'error': 'Target IP address or domain name is required'}), 400
     
     scanner = PortScanner()
     results = scanner.scan(target)
