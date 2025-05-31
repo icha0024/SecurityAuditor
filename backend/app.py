@@ -6,6 +6,8 @@ import time
 import socket
 import threading
 import ipaddress
+import ssl
+import requests
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-this-in-production'
@@ -95,6 +97,92 @@ class PortScanner:
             'overall_risk': overall_risk
         }
 
+class SSLChecker:
+    def check_ssl(self, domain, port=443):
+        try:
+            context = ssl.create_default_context()
+            with socket.create_connection((domain, port), timeout=10) as sock:
+                with context.wrap_socket(sock, server_hostname=domain) as ssock:
+                    cert = ssock.getpeercert()
+            
+            not_after = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
+            not_before = datetime.strptime(cert['notBefore'], '%b %d %H:%M:%S %Y %Z')
+            days_until_expiry = (not_after - datetime.now()).days
+            
+            if days_until_expiry < 7:
+                risk = 'HIGH'
+            elif days_until_expiry < 30:
+                risk = 'MEDIUM'
+            else:
+                risk = 'LOW'
+            
+            return {
+                'domain': domain,
+                'valid': True,
+                'issuer': cert.get('issuer', [{}])[0].get('organizationName', 'Unknown'),
+                'subject': cert.get('subject', [{}])[0].get('commonName', domain),
+                'valid_from': cert['notBefore'],
+                'valid_until': cert['notAfter'],
+                'days_until_expiry': days_until_expiry,
+                'risk': risk,
+                'scan_time': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                'domain': domain,
+                'valid': False,
+                'error': str(e),
+                'risk': 'HIGH',
+                'scan_time': datetime.now().isoformat()
+            }
+
+class SecurityHeaderChecker:
+    def check_headers(self, url):
+        try:
+            if not url.startswith(('http://', 'https://')):
+                url = 'https://' + url
+            
+            response = requests.get(url, timeout=10, allow_redirects=True)
+            headers = response.headers
+            
+            security_headers = {
+                'Strict-Transport-Security': headers.get('Strict-Transport-Security'),
+                'Content-Security-Policy': headers.get('Content-Security-Policy'),
+                'X-Frame-Options': headers.get('X-Frame-Options'),
+                'X-Content-Type-Options': headers.get('X-Content-Type-Options'),
+                'X-XSS-Protection': headers.get('X-XSS-Protection'),
+                'Referrer-Policy': headers.get('Referrer-Policy')
+            }
+            
+            missing_headers = [name for name, value in security_headers.items() if not value]
+            present_headers = [name for name, value in security_headers.items() if value]
+            
+            if len(missing_headers) >= 4:
+                risk = 'HIGH'
+            elif len(missing_headers) >= 2:
+                risk = 'MEDIUM'
+            else:
+                risk = 'LOW'
+            
+            return {
+                'url': url,
+                'status_code': response.status_code,
+                'security_headers': security_headers,
+                'present_headers': present_headers,
+                'missing_headers': missing_headers,
+                'risk': risk,
+                'scan_time': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            return {
+                'url': url,
+                'error': str(e),
+                'risk': 'UNKNOWN',
+                'scan_time': datetime.now().isoformat()
+            }
+
 # Simple rate limiting
 def check_rate_limit(ip):
     current_time = time.time()
@@ -159,6 +247,34 @@ def scan_ports():
     
     return jsonify(results)
 
+@app.route('/api/scan/ssl', methods=['POST'])
+@jwt_required()
+def scan_ssl():
+    data = request.get_json()
+    domain = data.get('domain', '').strip()
+    
+    if not domain:
+        return jsonify({'error': 'Domain is required'}), 400
+    
+    checker = SSLChecker()
+    results = checker.check_ssl(domain)
+    
+    return jsonify(results)
+
+@app.route('/api/scan/headers', methods=['POST'])
+@jwt_required()
+def scan_headers():
+    data = request.get_json()
+    url = data.get('url', '').strip()
+    
+    if not url:
+        return jsonify({'error': 'URL is required'}), 400
+    
+    checker = SecurityHeaderChecker()
+    results = checker.check_headers(url)
+    
+    return jsonify(results)
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({
@@ -177,7 +293,9 @@ def home():
             'health': '/api/health',
             'login': '/api/auth/login',
             'verify': '/api/auth/verify',
-            'port_scan': '/api/scan/ports'
+            'port_scan': '/api/scan/ports',
+            'ssl_scan': '/api/scan/ssl',
+            'header_scan': '/api/scan/headers'
         }
     })
 
