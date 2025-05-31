@@ -8,6 +8,11 @@ import threading
 import ipaddress
 import ssl
 import requests
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-this-in-production'

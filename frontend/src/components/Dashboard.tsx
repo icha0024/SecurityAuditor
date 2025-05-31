@@ -44,6 +44,8 @@ interface HeadersResult {
   scan_time: string;
 }
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'ports' | 'ssl' | 'headers'>('ports');
   const [loading, setLoading] = useState(false);
@@ -77,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
     
     try {
       const response = await axios.post<PortScanResult>(
-        'http://localhost:5000/api/scan/ports',
+        `${API_URL}/api/scan/ports`,
         { target: portTarget },
         axiosConfig
       );
@@ -99,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
     
     try {
       const response = await axios.post<SSLResult>(
-        'http://localhost:5000/api/scan/ssl',
+        `${API_URL}/api/scan/ssl`,
         { domain: sslDomain },
         axiosConfig
       );
@@ -121,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
     
     try {
       const response = await axios.post<HeadersResult>(
-        'http://localhost:5000/api/scan/headers',
+        `${API_URL}/api/scan/headers`,
         { url: headersUrl },
         axiosConfig
       );

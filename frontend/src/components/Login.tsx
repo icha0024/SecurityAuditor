@@ -12,6 +12,8 @@ interface LoginResponse {
   user: string;
 }
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +26,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await axios.post<LoginResponse>('http://localhost:5000/api/auth/login', {
+      const response = await axios.post<LoginResponse>(`${API_URL}/api/auth/login`, {
         username,
         password
       });
