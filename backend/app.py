@@ -358,6 +358,9 @@ def scan_ports():
     if not target:
         return jsonify({'error': 'Target IP address or domain name is required'}), 400
     
+    if len(target) > 100:
+        return jsonify({'error': 'Target name is too long (maximum 100 characters)'}), 400
+    
     scanner = PortScanner()
     results = scanner.scan(target)
     
@@ -375,6 +378,9 @@ def scan_ssl():
     if not domain:
         return jsonify({'error': 'Domain is required'}), 400
     
+    if len(domain) > 100:
+        return jsonify({'error': 'Domain name is too long (maximum 100 characters)'}), 400
+    
     checker = SSLChecker()
     results = checker.check_ssl(domain)
     
@@ -388,6 +394,9 @@ def scan_headers():
     
     if not url:
         return jsonify({'error': 'URL is required'}), 400
+    
+    if len(url) > 200:
+        return jsonify({'error': 'URL is too long (maximum 200 characters)'}), 400
     
     checker = SecurityHeaderChecker()
     results = checker.check_headers(url)

@@ -190,8 +190,10 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
                     value={portTarget}
                     onChange={(e) => setPortTarget(e.target.value)}
                     placeholder="e.g., 8.8.8.8 or google.com"
+                    maxLength={100}
                     required
                   />
+                  <small className="input-hint">{portTarget.length}/100 characters</small>
                 </div>
                 <button type="submit" disabled={loading} className="scan-button">
                   {loading ? 'Scanning...' : 'Start Port Scan'}
@@ -263,8 +265,10 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
                     value={sslDomain}
                     onChange={(e) => setSslDomain(e.target.value)}
                     placeholder="e.g., google.com"
+                    maxLength={100}
                     required
                   />
+                  <small className="input-hint">{sslDomain.length}/100 characters</small>
                 </div>
                 <button type="submit" disabled={loading} className="scan-button">
                   {loading ? 'Checking...' : 'Check SSL Certificate'}
@@ -318,8 +322,10 @@ const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
                     value={headersUrl}
                     onChange={(e) => setHeadersUrl(e.target.value)}
                     placeholder="e.g., https://example.com"
+                    maxLength={200}
                     required
                   />
+                  <small className="input-hint">{headersUrl.length}/200 characters</small>
                 </div>
                 <button type="submit" disabled={loading} className="scan-button">
                   {loading ? 'Analyzing...' : 'Analyze Security Headers'}
