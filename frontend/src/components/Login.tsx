@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       if (err.response) {
         setError(err.response.data?.error || `HTTP ${err.response.status}: ${err.response.statusText}`);
       } else if (err.request) {
-        setError('Cannot connect to server. Make sure backend is running on localhost:5000');
+        setError('Cannot connect to server. Make sure backend is running.');
       } else {
         setError('Login failed: ' + err.message);
       }
@@ -89,7 +89,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </form>
         
         <div className="login-footer">
-          <p>Default credentials: admin / securepass123</p>
+          <p>Enter your credentials to access the security platform</p>
         </div>
       </div>
     </div>

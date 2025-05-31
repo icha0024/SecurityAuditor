@@ -15,11 +15,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-this-in-production'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
-
 CORS(app)
+
+# Configuration from environment variables
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-default-secret-key-change-me')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', '3600')))
+
 jwt = JWTManager(app)
+
+# Load credentials from environment
+DEFAULT_USERNAME = os.getenv('DEFAULT_USERNAME', 'admin')
+DEFAULT_PASSWORD = os.getenv('DEFAULT_PASSWORD', 'change-me-in-env')
+API_VERSION = os.getenv('API_VERSION', '1.0.0')
+
+# Simple user store (in production, use a proper database)
+users = {DEFAULT_USERNAME: DEFAULT_PASSWORD}
 
 # Simple rate limiting
 login_attempts = {}
@@ -333,8 +343,8 @@ def login():
     username = data.get('username', '')
     password = data.get('password', '')
     
-    # Simple authentication (change this in production!)
-    if username == 'admin' and password == 'securepass123':
+    # Check against environment-loaded credentials
+    if username in users and users[username] == password:
         access_token = create_access_token(identity=username)
         return jsonify({
             'access_token': access_token,
@@ -413,15 +423,23 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'version': '1.0.0',
-        'message': 'SecurityAuditor API is running'
+        'message': 'SecurityAuditor API is running',
+        'version': API_VERSION,
+        'endpoints': {
+            'health': '/api/health',
+            'login': '/api/auth/login',
+            'verify': '/api/auth/verify',
+            'port_scan': '/api/scan/ports',
+            'ssl_scan': '/api/scan/ssl',
+            'header_scan': '/api/scan/headers'
+        }
     })
 
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
         'message': 'SecurityAuditor Backend API',
-        'version': '1.0.0',
+        'version': API_VERSION,
         'endpoints': {
             'health': '/api/health',
             'login': '/api/auth/login',
@@ -434,6 +452,13 @@ def home():
 
 if __name__ == '__main__':
     print("Starting SecurityAuditor Backend...")
-    print("Default login: admin / securepass123")
-    print("API running on http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    print(f"Default login: {DEFAULT_USERNAME} / {DEFAULT_PASSWORD}")
+    print(f"API version: {API_VERSION}")
+    
+    # Get configuration from environment
+    host = os.getenv('FLASK_HOST', 'localhost')
+    port = int(os.getenv('FLASK_PORT', '5000'))
+    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    
+    print(f"API running on http://{host}:{port}")
+    app.run(host=host, port=port, debug=debug)
