@@ -456,9 +456,9 @@ if __name__ == '__main__':
     print(f"API version: {API_VERSION}")
     
     # Get configuration from environment
-    host = os.getenv('FLASK_HOST', 'localhost')
-    port = int(os.getenv('FLASK_PORT', '5000'))
-    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    host = '0.0.0.0'  # Listen on all interfaces
+    port = int(os.environ.get('PORT', 5000))  # Use Railway's assigned port
+    debug = False  # Disable debug
     
     print(f"API running on http://{host}:{port}")
     app.run(host=host, port=port, debug=debug)
