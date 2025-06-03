@@ -15,7 +15,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    'https://security-auditor.vercel.app',
+    'http://localhost:3000'
+])
 
 # Configuration from environment variables
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-default-secret-key-change-me')

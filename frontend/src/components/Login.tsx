@@ -12,7 +12,7 @@ interface LoginResponse {
   user: string;
 }
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = 'https://securityauditor-production.up.railway.app';
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');

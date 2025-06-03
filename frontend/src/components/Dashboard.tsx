@@ -44,7 +44,7 @@ interface HeadersResult {
   scan_time: string;
 }
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = 'https://securityauditor-production.up.railway.app';
 
 const Dashboard: React.FC<DashboardProps> = ({ token, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'ports' | 'ssl' | 'headers'>('ports');
