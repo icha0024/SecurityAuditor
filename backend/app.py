@@ -458,10 +458,10 @@ if __name__ == '__main__':
     print(f"Default login: {DEFAULT_USERNAME} / {DEFAULT_PASSWORD}")
     print(f"API version: {API_VERSION}")
     
-    # Get configuration from environment
+    # Get configuration from environment (updated for Render)
     host = '0.0.0.0'  # Listen on all interfaces
-    port = int(os.environ.get('PORT', 5000))  # Use Railway's assigned port
-    debug = False  # Disable debug
+    port = int(os.environ.get('PORT', 5000))  # Render will set this automatically
+    debug = False  # debug off 
     
     print(f"API running on http://{host}:{port}")
     app.run(host=host, port=port, debug=debug)
